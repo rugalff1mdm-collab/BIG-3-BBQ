@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Big 3 BBQ • Gestão</title>
+<style>
+*{box-sizing:border-box}
+:root{--orange:#ffb400;--orange2:#ff8a00;--bg:#08090a;--panel:#111315;--line:#292c31;--muted:#9ca3af}
+html,body{margin:0;min-height:100%;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#fff}
+button,input{font:inherit}button{cursor:pointer}
+.login{position:fixed;inset:0;display:block;background:#050506;z-index:100;overflow:hidden}
+.hero{position:absolute;inset:0;min-height:100vh;background:transparent;z-index:1}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.20) 45%,rgba(0,0,0,.82) 100%),linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.35)),url("https://images.pexels.com/photos/19247571/pexels-photo-19247571.jpeg?auto=compress&cs=tinysrgb&w=1800") left center/cover no-repeat;filter:saturate(1.1) contrast(1.08)}
+.hero:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 7% 12%,rgba(255,132,0,.35),transparent 25%);pointer-events:none}
+.hero-content{position:relative;z-index:2;height:100%;padding:4vh 3vw;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center}
+.logo-mark{display:flex;align-items:center;gap:8px;font-weight:950;font-size:clamp(48px,5.2vw,88px);line-height:.82;letter-spacing:-4px;text-shadow:0 8px 30px #000}
+.logo-mark .big{color:#fff}.logo-mark .bbq{color:var(--orange);font-style:italic}
+.logo-icon{width:72px;height:72px;position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:40px;filter:drop-shadow(0 6px 14px #000)}
+.brand-sub{font-size:clamp(18px,1.8vw,29px);font-weight:900;letter-spacing:.34em;margin:14px 0 0;color:#fff}
+.brand-line{width:min(430px,78%);height:4px;background:var(--orange);margin:18px 0 11px;border-radius:99px}
+.tagline{font-size:clamp(12px,1.1vw,18px);font-weight:800;letter-spacing:.22em}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:clamp(42px,7vh,78px);max-width:520px;width:100%}
+.feature{border:1.5px solid rgba(255,180,0,.9);border-radius:10px;padding:13px 7px;text-align:center;background:rgba(7,7,7,.42);backdrop-filter:blur(5px)}
+.feature b{display:block;margin-top:8px;font-size:12px;letter-spacing:.04em}.feature span{display:block;color:#ddd;font-size:10px;line-height:1.35;margin-top:5px}
+.feature .ico{font-size:25px;color:var(--orange)}
+.slogan{margin-top:auto;color:var(--orange);font-family:"Brush Script MT","Segoe Script",cursive;font-size:clamp(21px,2.05vw,33px);font-style:italic;font-weight:800;max-width:510px;line-height:1.05;text-shadow:0 4px 20px #000}
+.login-side{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;background:transparent;padding:0 4.4vw;z-index:5}
+.login-card{position:relative;width:min(560px,39vw);padding:58px 40px 34px;border:1px solid #2c3035;border-radius:22px;background:linear-gradient(155deg,rgba(20,22,24,.97),rgba(11,12,14,.99));box-shadow:0 30px 90px rgba(0,0,0,.62);pointer-events:auto}
+.welcome{text-align:center;font-size:35px;font-weight:850;line-height:1.12;margin:0}.welcome strong{display:block;color:var(--orange);margin-top:10px;font-size:34px}
+.subtitle{text-align:center;color:#aeb3bb;line-height:1.5}
+.field{position:relative;margin-bottom:20px}.field input{width:100%;height:68px;border:1px solid #454a52;background:#101214;border-radius:13px;color:#fff;padding:0 54px;font-size:18px;outline:none}.field input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,180,0,.1)}.field .icon{position:absolute;left:19px;top:50%;transform:translateY(-50%);font-size:22px;color:#d9dde2}.eye{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#9298a2;background:none;border:0;font-size:19px}
+.login-btn{width:100%;height:72px;border:0;border-radius:13px;background:linear-gradient(180deg,#ffc21a,#ffad00);color:#111;font-size:20px;font-weight:850;box-shadow:0 12px 30px rgba(255,174,0,.18);margin-top:10px}
+.error{display:none;color:#ff7777;text-align:center;font-size:13px;margin-top:12px}.secure{display:flex;justify-content:center;gap:8px;align-items:center;border-top:1px solid #2d3035;margin-top:28px;padding-top:24px;color:#969ca5;font-size:13px}
+.app{display:none;min-height:100vh;background:#090a0c}.app.show{display:flex}.sidebar{width:245px;background:#101214;border-right:1px solid #24272b;padding:24px 15px;flex-shrink:0}.brand{font-weight:950;font-size:23px;padding:5px 12px 28px}.brand span{color:var(--orange)}.nav{display:block;width:100%;border:0;background:none;color:#aeb3bb;text-align:left;padding:13px 14px;border-radius:11px;margin:4px 0;font-size:14px}.nav:hover,.nav.active{background:linear-gradient(90deg,rgba(255,180,0,.18),rgba(255,180,0,.05));color:#fff}.logout{margin-top:18px;color:#ff7777}
+.main{flex:1;padding:30px;max-width:1500px;margin:0 auto;width:100%}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.title h1{margin:0;font-size:30px}.muted{color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card,.panel{background:linear-gradient(180deg,#151719,#111315);border:1px solid #282c31;border-radius:17px;padding:20px}.label{color:#969ca5;font-size:12px}.value{font-size:27px;font-weight:900;margin-top:8px}.up{color:#48c878;font-size:12px;margin-top:7px}.grid{display:grid;grid-template-columns:1.4fr .8fr;gap:16px;margin-top:16px}.panel h2{font-size:17px;margin:0 0 16px}.bars{height:220px;display:flex;align-items:end;gap:12px;border-bottom:1px solid #2a2d31}.barbox{flex:1;text-align:center;color:#777;font-size:11px}.bar{background:linear-gradient(180deg,#ffc21a,#ff8a00);border-radius:6px 6px 0 0;min-height:18px}.rows{display:flex;flex-direction:column;gap:10px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #292c31}.pill{background:#fff1d0;color:#bd7200;padding:5px 9px;border-radius:999px;font-size:11px}.extra{display:none}.extra:target{display:block}.extra:target~.dashboard{display:none}.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.page-head h1{margin:0}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:13px;border-bottom:1px solid #292c31;font-size:13px}.table th{color:#9aa0a9}.btn{border:0;border-radius:10px;background:linear-gradient(180deg,#ffc21a,#ff9f00);color:#111;font-weight:800;padding:11px 15px}.btn.alt{background:#1b1e22;color:#fff;border:1px solid #363a40}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:16px}
+@media(max-width:900px){.login-card{width:48vw}.sidebar{width:190px}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+@media(max-width:620px){.hero:before{background-position:left center}.login-side{justify-content:center;padding:20px}.login-card{width:min(560px,92vw)}.sidebar{width:68px;padding:18px 7px}.brand{font-size:0}.nav{font-size:0;text-align:center}.main{padding:18px}.cards,.stats{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column;gap:10px}}
+</style>
+</head>
+<body>
+<div class="login" id="login">
+<section class="hero"><div class="hero-content">
+<div class="logo-mark"><span class="logo-icon">🔥</span><span class="big">BIG 3</span><span class="bbq">BBQ</span></div>
+<div class="brand-sub">GESTÃO</div><div class="brand-line"></div>
+<div class="tagline">SABOR &nbsp;•&nbsp; QUALIDADE &nbsp;•&nbsp; RESULTADO</div>
+<div class="features">
+<div class="feature"><div class="ico">🛍</div><b>PEDIDOS</b><span>Controle total dos pedidos</span></div>
+<div class="feature"><div class="ico">📦</div><b>ESTOQUE</b><span>Evite desperdícios e faltas</span></div>
+<div class="feature"><div class="ico">📈</div><b>RELATÓRIOS</b><span>Acompanhe seu crescimento</span></div>
+<div class="feature"><div class="ico">🛡</div><b>SEGURANÇA</b><span>Seus dados protegidos</span></div>
+</div>
+<div class="slogan">Mais que uma gestão,<br>é o seu negócio no controle!</div>
+</div></section>
+<section class="login-side"><div class="login-card">
+<h1 class="welcome">Bem-vindo ao<strong>Big 3 BBQ • Gestão</strong></h1>
+<p class="subtitle">Faça login para acessar o sistema<br>de gestão do seu negócio.</p>
+<div class="field"><span class="icon">♙</span><input id="user" placeholder="Usuário" autocomplete="username"></div>
+<div class="field"><span class="icon">♙</span><input id="pass" type="password" placeholder="Senha" autocomplete="current-password"><button class="eye" onclick="togglePass()">◉</button></div>
+<button class="login-btn" onclick="login()">↪ &nbsp; Entrar</button>
+<div class="error" id="error">Usuário ou senha inválidos.</div>
+<div class="secure">♢ &nbsp; Sistema seguro e online</div>
+</div></section></div>
+<div class="app" id="app">
+<aside class="sidebar"><div class="brand">BIG 3 <span>BBQ</span></div>
+<button class="nav active" onclick="showPage('dashboard',this)">⌂ &nbsp; Dashboard</button>
+<button class="nav" onclick="showPage('pedidos',this)">🛍 &nbsp; Pedidos</button><button class="nav" onclick="showPage('vendas',this)">💰 &nbsp; Vendas</button><button class="nav" onclick="showPage('despesas',this)">💸 &nbsp; Despesas</button><button class="nav" onclick="showPage('estoque',this)">📦 &nbsp; Estoque</button><button class="nav" onclick="showPage('produtos',this)">🍔 &nbsp; Produtos</button><button class="nav" onclick="showPage('ficha',this)">📋 &nbsp; Ficha Técnica</button><button class="nav" onclick="showPage('compras',this)">🛒 &nbsp; Compras</button><button class="nav" onclick="showPage('relatorios',this)">📊 &nbsp; Relatórios</button><button class="nav" onclick="showPage('backup',this)">💾 &nbsp; Backup</button><button class="nav" onclick="showPage('clientes',this)">👥 &nbsp; Clientes</button><button class="nav" onclick="showPage('caixa',this)">💳 &nbsp; Caixa</button><button class="nav logout" onclick="logout()">↪ &nbsp; Sair</button>
+</aside>
+<main class="main"><section class="page dashboard" id="dashboard">
+<div class="top"><div class="title"><h1>Dashboard</h1><p class="muted">Visão geral do seu negócio</p></div><button class="btn alt">Outubro 2026 ▾</button></div>
+<div class="cards"><div class="card"><div class="label">Faturamento</div><div class="value">R$ 18.430</div><div class="up">↑ 12,4% no período</div></div><div class="card"><div class="label">Pedidos</div><div class="value">428</div><div class="up">↑ 8,1%</div></div><div class="card"><div class="label">Ticket médio</div><div class="value">R$ 43,06</div><div class="up">↑ 3,7%</div></div><div class="card"><div class="label">Lucro estimado</div><div class="value">R$ 5.480</div><div class="up">↑ 9,2%</div></div></div>
+<div class="grid"><div class="panel"><h2>Faturamento por período</h2><div class="bars"><div class="barbox"><div class="bar" style="height:40%"></div>Seg</div><div class="barbox"><div class="bar" style="height:55%"></div>Ter</div><div class="barbox"><div class="bar" style="height:46%"></div>Qua</div><div class="barbox"><div class="bar" style="height:72%"></div>Qui</div><div class="barbox"><div class="bar" style="height:65%"></div>Sex</div><div class="barbox"><div class="bar" style="height:88%"></div>Sáb</div><div class="barbox"><div class="bar" style="height:70%"></div>Dom</div></div></div><div class="panel"><h2>Resumo</h2><div class="rows"><div class="row"><span>Pedidos entregues</span><b>389</b></div><div class="row"><span>Em preparo</span><b>6</b></div><div class="row"><span>Cancelados</span><b>4</b></div><div class="row"><span>Margem média</span><span class="pill">31,8%</span></div></div></div></div>
+</section>
+<section class="page extra" id="pedidos"><div class="page-head"><div><h1>Pedidos</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="vendas"><div class="page-head"><div><h1>Vendas</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="despesas"><div class="page-head"><div><h1>Despesas</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="estoque"><div class="page-head"><div><h1>Estoque</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="produtos"><div class="page-head"><div><h1>Produtos</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="ficha"><div class="page-head"><div><h1>Ficha</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="compras"><div class="page-head"><div><h1>Compras</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="relatorios"><div class="page-head"><div><h1>Relatorios</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="backup"><div class="page-head"><div><h1>Backup</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="clientes"><div class="page-head"><div><h1>Clientes</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+<section class="page extra" id="caixa"><div class="page-head"><div><h1>Caixa</h1><p class="muted">Gestão e acompanhamento do módulo</p></div><button class="btn">+ Novo lançamento</button></div><div class="panel"><h2>Dados do módulo</h2><p class="muted">Área preparada para receber os dados reais do sistema.</p><table class="table"><tr><th>Item</th><th>Status</th><th>Valor</th></tr><tr><td>Registro de demonstração</td><td><span class="pill">Ativo</span></td><td>R$ 0,00</td></tr></table></div></section>
+</main></div>
+<script>
+function login(){const u=document.getElementById('user').value.trim(),p=document.getElementById('pass').value,e=document.getElementById('error');if((u==='admin'&&p==='1234')||(u==='caixa'&&p==='1234')){document.getElementById('login').style.display='none';document.getElementById('app').classList.add('show');e.style.display='none'}else e.style.display='block'}
+function togglePass(){const p=document.getElementById('pass');p.type=p.type==='password'?'text':'password'}
+function showPage(id,el){document.querySelectorAll('.page').forEach(x=>x.style.display='none');document.getElementById(id).style.display='block';document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));el.classList.add('active')}
+function logout(){document.getElementById('app').classList.remove('show');document.getElementById('login').style.display='grid';document.getElementById('pass').value=''}
+document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script>
+</body>
+</html>
