@@ -12,6 +12,8 @@ async function makeToken(){
   const bytes=crypto.getRandomValues(new Uint8Array(32));
   return btoa(String.fromCharCode(...bytes)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
 }
+async function passwordHash(password){const salt=crypto.getRandomValues(new Uint8Array(16));const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:120000,hash:'SHA-256'},key,256);return `pbkdf2$120000${btoa(String.fromCharCode(...salt))}${btoa(String.fromCharCode(...new Uint8Array(bits)))}`;}
+async function bootstrap(env){if(!env.ADMIN_PASSWORD||!env.CAIXA_PASSWORD)return;const a=await env.DB.prepare('SELECT COUNT(*) total FROM users').first();if(Number(a.total)>0)return;const ah=await passwordHash(env.ADMIN_PASSWORD),ch=await passwordHash(env.CAIXA_PASSWORD);await env.DB.batch([env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES('admin',?, 'admin')").bind(ah),env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES('caixa',?, 'operator')").bind(ch)]);}
 async function passwordOk(password, stored){
   const parts=stored.split('$'); if(parts.length!==4) return false;
   const salt=Uint8Array.from(atob(parts[2]),c=>c.charCodeAt(0));
@@ -26,6 +28,7 @@ export default {
     try{
       if(url.pathname==='/api/health') return json({ok:true,database:!!env.DB});
       if(!env.DB) return json({error:'Banco D1 não configurado'},503);
+      await bootstrap(env);
       if(url.pathname==='/api/auth/login'&&request.method==='POST'){
         const b=await request.json();
         const user=await env.DB.prepare('SELECT id,username,password_hash,role FROM users WHERE username=? AND active=1').bind(String(b.username||'').trim()).first();
