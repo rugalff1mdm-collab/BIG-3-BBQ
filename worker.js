@@ -40,6 +40,7 @@ export default {async fetch(req,env){
   if(u.pathname==="/api/health")return out({ok:true,database:!!env.DB});
   if(!env.DB)return out({error:"D1 não configurado"},503);
   await init(env);
+  if(u.pathname==="/api/auth/register"&&req.method==="POST"){const b=await req.json();const n=String(b.username||"").trim().toLowerCase();const p=String(b.password||"");if(n.length<3||p.length<4)return out({error:"Usuário ou senha inválidos"},400);const x=await env.DB.prepare("SELECT id FROM users WHERE username=?").bind(n).first();if(x)return out({error:"Usuário já cadastrado"},409);await env.DB.prepare("INSERT INTO users(username,password_hash,role,active) VALUES(?,?,?,1)").bind(n,await hash(p),"operator").run();return out({ok:true},201)}
   if(u.pathname==="/api/auth/login"&&req.method==="POST")return login(req,env);
   const me=await user(req,env);if(!me)return out({error:"Não autenticado"},401);
   if(u.pathname==="/api/auth/me")return out({user:me});
