@@ -17,15 +17,18 @@ async function init(env){
   env.DB.prepare("CREATE TABLE IF NOT EXISTS recipes(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER UNIQUE NOT NULL,yield_qty REAL DEFAULT 1,yield_unit TEXT DEFAULT 'unidade',created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
   env.DB.prepare("CREATE TABLE IF NOT EXISTS recipe_items(id INTEGER PRIMARY KEY AUTOINCREMENT,recipe_id INTEGER NOT NULL,ingredient_id INTEGER NOT NULL,quantity REAL NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
   env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipe_id)"),
-  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id)"),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'sale'").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN base_unit TEXT DEFAULT 'un'").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_qty REAL DEFAULT 0").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_unit TEXT DEFAULT 'un'").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_cost_cents INTEGER DEFAULT 0").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN yield_percent REAL DEFAULT 100").catch(()=>{}),
-  env.DB.prepare("ALTER TABLE products ADD COLUMN unit_cost_micros INTEGER DEFAULT 0").catch(()=>{})
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id)")
  ]);
+ for(const sql of [
+  "ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'sale'",
+  "ALTER TABLE products ADD COLUMN base_unit TEXT DEFAULT 'un'",
+  "ALTER TABLE products ADD COLUMN purchase_qty REAL DEFAULT 0",
+  "ALTER TABLE products ADD COLUMN purchase_unit TEXT DEFAULT 'un'",
+  "ALTER TABLE products ADD COLUMN purchase_cost_cents INTEGER DEFAULT 0",
+  "ALTER TABLE products ADD COLUMN yield_percent REAL DEFAULT 100",
+  "ALTER TABLE products ADD COLUMN unit_cost_micros INTEGER DEFAULT 0"
+ ]){try{await env.DB.prepare(sql).run()}catch{}}
+
  if(env.ADMIN_PASSWORD&&env.CAIXA_PASSWORD){
   const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();
   if(!n.n){await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("admin",await hash(env.ADMIN_PASSWORD),"admin").run();await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("caixa",await hash(env.CAIXA_PASSWORD),"operator").run()}
