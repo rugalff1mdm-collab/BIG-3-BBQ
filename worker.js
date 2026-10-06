@@ -27,7 +27,7 @@ async function user(req,env){
  return env.DB.prepare("SELECT u.id,u.username,u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND u.active=1 AND s.expires_at>datetime('now')").bind(t).first();
 }
 async function login(req,env){
- const b=await req.json();const u=await env.DB.prepare("SELECT * FROM users WHERE username=? AND active=1").bind(String(b.username||"").trim()).first();
+ const b=await req.json();const u=await env.DB.prepare("SELECT * FROM users WHERE username=? AND active=1").bind(String(b.username||"").trim().toLowerCase()).first();
  if(!u||await hash(String(b.password||""))!==u.password_hash)return out({error:"Usuário ou senha inválidos"},401);
  const token=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/=/g,"");
  await env.DB.prepare("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,datetime('now','+7 days'))").bind(await hash(token),u.id).run();
