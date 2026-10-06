@@ -13,7 +13,18 @@ async function init(env){
   env.DB.prepare("CREATE TABLE IF NOT EXISTS expenses(id INTEGER PRIMARY KEY AUTOINCREMENT,description TEXT,amount_cents INTEGER,category TEXT,paid_at TEXT,notes TEXT,created_by INTEGER)"),
   env.DB.prepare("CREATE TABLE IF NOT EXISTS stock_movements(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER,quantity REAL,type TEXT,reason TEXT,reference_id INTEGER,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
   env.DB.prepare("CREATE TABLE IF NOT EXISTS cash_movements(id INTEGER PRIMARY KEY AUTOINCREMENT,type TEXT,description TEXT,amount_cents INTEGER,payment_method TEXT,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
-  env.DB.prepare("CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at TEXT)")
+  env.DB.prepare("CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id INTEGER,expires_at TEXT)"),
+  env.DB.prepare("CREATE TABLE IF NOT EXISTS recipes(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER UNIQUE NOT NULL,yield_qty REAL DEFAULT 1,yield_unit TEXT DEFAULT 'unidade',created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
+  env.DB.prepare("CREATE TABLE IF NOT EXISTS recipe_items(id INTEGER PRIMARY KEY AUTOINCREMENT,recipe_id INTEGER NOT NULL,ingredient_id INTEGER NOT NULL,quantity REAL NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipe_id)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id)"),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'sale'").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN base_unit TEXT DEFAULT 'un'").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_qty REAL DEFAULT 0").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_unit TEXT DEFAULT 'un'").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN purchase_cost_cents INTEGER DEFAULT 0").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN yield_percent REAL DEFAULT 100").catch(()=>{}),
+  env.DB.prepare("ALTER TABLE products ADD COLUMN unit_cost_micros INTEGER DEFAULT 0").catch(()=>{})
  ]);
  if(env.ADMIN_PASSWORD&&env.CAIXA_PASSWORD){
   const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();
@@ -53,7 +64,18 @@ export default {async fetch(req,env){
    return out({sales_cents:s.v,orders:s.n,expenses_cents:e.v,profit_cents:Number(s.v)-Number(e.v),low_stock:low.n});
   }
   if(u.pathname==="/api/products"&&req.method==="GET")return out((await env.DB.prepare("SELECT * FROM products WHERE active=1 ORDER BY name").all()).results);
-  if(u.pathname==="/api/products"&&req.method==="POST"){const b=await req.json();const r=await env.DB.prepare("INSERT INTO products(name,category,price_cents,cost_cents,stock,min_stock) VALUES(?,?,?,?,?,?)").bind(b.name,b.category||"",money(b.price),money(b.cost),Number(b.stock||0),Number(b.min_stock||0)).run();return out({id:r.meta.last_row_id},201)}
+  if(u.pathname==="/api/products"&&req.method==="POST"){
+   const b=await req.json();const type=b.product_type||"sale",base=b.base_unit||"un",purchaseQty=Number(b.purchase_qty||0),purchaseCost=money(b.purchase_cost),yieldPct=Math.max(0,Number(b.yield_percent||100));
+   const effectiveQty=purchaseQty*(yieldPct/100);const unitMicros=effectiveQty>0?Math.round((purchaseCost/100)*1000000/effectiveQty):0;const derivedCost=Math.round(unitMicros/10000);
+   const r=await env.DB.prepare("INSERT INTO products(name,category,price_cents,cost_cents,stock,min_stock,product_type,base_unit,purchase_qty,purchase_unit,purchase_cost_cents,yield_percent,unit_cost_micros) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(b.name,b.category||"",money(b.price),derivedCost,Number(b.stock||0),Number(b.min_stock||0),type,base,purchaseQty,b.purchase_unit||base,purchaseCost,yieldPct,unitMicros).run();
+   return out({id:r.meta.last_row_id,cost_cents:derivedCost,unit_cost_micros:unitMicros},201)
+  }
+  if(u.pathname==="/api/recipes"&&req.method==="GET"){
+   const pid=Number(u.searchParams.get("product_id")||0);if(!pid)return out([]);const r=await env.DB.prepare("SELECT r.*,p.name product_name FROM recipes r JOIN products p ON p.id=r.product_id WHERE r.product_id=?").bind(pid).first();if(!r)return out(null);const items=(await env.DB.prepare("SELECT ri.*,p.name ingredient_name,p.base_unit,p.unit_cost_micros,p.purchase_qty,p.purchase_unit,p.purchase_cost_cents FROM recipe_items ri JOIN products p ON p.id=ri.ingredient_id WHERE ri.recipe_id=? ORDER BY ri.id").bind(r.id).all()).results;const cost=items.reduce((s,i)=>s+Math.round(Number(i.quantity)*Number(i.unit_cost_micros||0)),0);return out({...r,items,cost_micros:cost,cost_cents:Math.round(cost/10000),cost_reais:cost/1000000})
+  }
+  if(u.pathname==="/api/recipes"&&req.method==="POST"){
+   const b=await req.json();const pid=Number(b.product_id);if(!pid||!Array.isArray(b.items)||!b.items.length)return out({error:"Informe o produto e os ingredientes"},400);const product=await env.DB.prepare("SELECT * FROM products WHERE id=? AND active=1").bind(pid).first();if(!product)return out({error:"Produto não encontrado"},404);const items=[];for(const i of b.items){const ing=await env.DB.prepare("SELECT * FROM products WHERE id=? AND active=1").bind(Number(i.ingredient_id)).first();const q=Number(i.quantity);if(!ing||ing.id===pid||q<=0)return out({error:"Ingrediente inválido"},400);items.push([ing,q])}const old=await env.DB.prepare("SELECT id FROM recipes WHERE product_id=?").bind(pid).first();let rid;if(old){rid=old.id;await env.DB.prepare("UPDATE recipes SET yield_qty=?,yield_unit=? WHERE id=?").bind(Number(b.yield_qty||1),b.yield_unit||"unidade",rid).run();await env.DB.prepare("DELETE FROM recipe_items WHERE recipe_id=?").bind(rid).run()}else{const rr=await env.DB.prepare("INSERT INTO recipes(product_id,yield_qty,yield_unit) VALUES(?,?,?)").bind(pid,Number(b.yield_qty||1),b.yield_unit||"unidade").run();rid=rr.meta.last_row_id}for(const [ing,q] of items)await env.DB.prepare("INSERT INTO recipe_items(recipe_id,ingredient_id,quantity) VALUES(?,?,?)").bind(rid,ing.id,q).run();const total=items.reduce((s,[ing,q])=>s+Math.round(q*Number(ing.unit_cost_micros||0)),0);const per=Number(b.yield_qty||1)>0?Math.round(total/Number(b.yield_qty||1)):total;await env.DB.prepare("UPDATE products SET cost_cents=? WHERE id=?").bind(Math.round(per/10000),pid).run();return out({ok:true,recipe_id:rid,cost_micros:total,cost_cents:Math.round(per/10000),cost_reais:per/1000000},201)
+  }
   if(u.pathname==="/api/customers"&&req.method==="GET")return out((await env.DB.prepare("SELECT * FROM customers ORDER BY name").all()).results);
   if(u.pathname==="/api/customers"&&req.method==="POST"){const b=await req.json();const r=await env.DB.prepare("INSERT INTO customers(name,phone,address,notes) VALUES(?,?,?,?)").bind(b.name,b.phone||"",b.address||"",b.notes||"").run();return out({id:r.meta.last_row_id},201)}
   if(u.pathname==="/api/orders"&&req.method==="GET")return out((await env.DB.prepare("SELECT o.*,c.name customer_name FROM orders o LEFT JOIN customers c ON c.id=o.customer_id ORDER BY o.id DESC").all()).results);
