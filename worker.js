@@ -20,7 +20,12 @@ async function init(env){
   env.DB.prepare("CREATE TABLE IF NOT EXISTS recipes(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER UNIQUE NOT NULL,yield_qty REAL DEFAULT 1,yield_unit TEXT DEFAULT 'unidade',created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
   env.DB.prepare("CREATE TABLE IF NOT EXISTS recipe_items(id INTEGER PRIMARY KEY AUTOINCREMENT,recipe_id INTEGER NOT NULL,ingredient_id INTEGER NOT NULL,quantity REAL NOT NULL,quantity_unit TEXT DEFAULT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP)"),
   env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipe_id)"),
-  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id)")
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_expenses_paid ON expenses(paid_at)"),
+  env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_stock_product ON stock_movements(product_id)")
  ]);
  for(const sql of [
   "ALTER TABLE recipe_items ADD COLUMN quantity_unit TEXT DEFAULT NULL",
@@ -34,7 +39,7 @@ async function init(env){
  ]){try{await env.DB.prepare(sql).run()}catch{}}
 
  const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();
- if(!n.n){const adminPass=env.ADMIN_PASSWORD||"1234";const caixaPass=env.CAIXA_PASSWORD||"1234";await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("admin",await hash(adminPass),"admin").run();await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("caixa",await hash(caixaPass),"operator").run()}
+ if(!n.n){const adminPass=env.ADMIN_PASSWORD||"1234";const caixaPass=env.CAIXA_PASSWORD||"1234";await env.DB.batch([env.DB.prepare("INSERT OR IGNORE INTO users(username,password_hash,role,active) VALUES(?,?,?,1)").bind("admin",await hash(adminPass),"admin"),env.DB.prepare("INSERT OR IGNORE INTO users(username,password_hash,role,active) VALUES(?,?,?,1)").bind("caixa",await hash(caixaPass),"operator")])}
 }
 async function user(req,env){
  const h=req.headers.get("authorization")||"";
@@ -61,7 +66,7 @@ export default {async fetch(req,env){
  const u=new URL(req.url);
  if(!u.pathname.startsWith("/api/") && env.ASSETS)return env.ASSETS.fetch(req);
  try{
-  if(u.pathname==="/api/health"){if(!env.DB)return out({ok:false,database:false,error:"D1 não configurado"},503);try{await init(env);const r=await env.DB.prepare("SELECT 1 AS ok").first();const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();return out({ok:true,database:true,d1:Number(r?.ok)===1,users:Number(n?.n||0)})}catch(e){return out({ok:false,database:true,error:e.message||"Falha ao inicializar o D1"},503)}}
+  if(u.pathname==="/api/health"){if(!env.DB)return out({ok:false,database:false,error:"D1 não configurado"},503);try{await init(env);const r=await env.DB.prepare("SELECT 1 AS ok").first();const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();return out({ok:true,database:true,d1:Number(r?.ok)===1,users:Number(n?.n||0),version:"2026.10.07"})}catch(e){return out({ok:false,database:true,error:e.message||"Falha ao inicializar o D1"},503)}}
   if(!env.DB)return out({error:"D1 não configurado"},503);
   await init(env);
   if(u.pathname==="/api/auth/register"&&req.method==="POST"){const me=await user(req,env);if(!me||me.role!=="admin")return out({error:"Somente o administrador pode criar novos acessos."},403);const b=await req.json();const n=String(b.username||"").trim().toLowerCase();const p=String(b.password||"");if(!/^[a-z0-9._-]{3,32}$/.test(n))return out({error:"Usuário inválido. Use 3 a 32 caracteres: letras, números, ponto, hífen ou _."},400);if(p.length<8||p.length>128)return out({error:"A senha precisa ter entre 8 e 128 caracteres."},400);const x=await env.DB.prepare("SELECT id FROM users WHERE lower(username)=?").bind(n).first();if(x)return out({error:"Usuário já cadastrado"},409);const r=await env.DB.prepare("INSERT INTO users(username,password_hash,role,active) VALUES(?,?,?,1)").bind(n,await hash(p),"operator").run();const bytes=crypto.getRandomValues(new Uint8Array(32));const token=[...bytes].map(x=>x.toString(16).padStart(2,"0")).join("");await env.DB.prepare("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,datetime('now','+7 days'))").bind(await hash(token),r.meta.last_row_id).run();return out({ok:true,token,user:{id:r.meta.last_row_id,username:n,role:"operator"}},201)}
