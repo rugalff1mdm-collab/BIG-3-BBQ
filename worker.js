@@ -1,7 +1,7 @@
 // Cloudflare deployment sync: 2026-10-05
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type, authorization","Access-Control-Allow-Methods":"GET,POST,PUT,DELETE,OPTIONS"};
 const enc=new TextEncoder();
-const out=(x,s=200)=>Response.json(x,{status:s,headers:cors});
+const out=(x,s=200)=>Response.json(x,{status:s,headers:{...cors,"Cache-Control":"no-store, no-cache, must-revalidate","Pragma":"no-cache"}});
 const hash=async s=>{const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")};
 const money=v=>Math.round(Number(v||0)*100);
 const unitFactor={g:1,kg:1000,ml:1,l:1000,un:1};
@@ -60,7 +60,7 @@ export default {async fetch(req,env){
  const u=new URL(req.url);
  if(!u.pathname.startsWith("/api/") && env.ASSETS)return env.ASSETS.fetch(req);
  try{
-  if(u.pathname==="/api/health")return out({ok:true,database:!!env.DB});
+  if(u.pathname==="/api/health"){if(!env.DB)return out({ok:false,database:false,error:"D1 não configurado"},503);try{const r=await env.DB.prepare("SELECT 1 AS ok").first();return out({ok:true,database:true,d1:Number(r?.ok)===1})}catch(e){return out({ok:false,database:true,error:e.message||"Falha ao acessar D1"},503)}}
   if(!env.DB)return out({error:"D1 não configurado"},503);
   await init(env);
   if(u.pathname==="/api/auth/register"&&req.method==="POST"){const b=await req.json();const n=String(b.username||"").trim().toLowerCase();const p=String(b.password||"");if(!/^[a-z0-9._-]{3,32}$/.test(n))return out({error:"Usuário inválido. Use 3 a 32 caracteres: letras, números, ponto, hífen ou _."},400);if(p.length<8||p.length>128)return out({error:"A senha precisa ter entre 8 e 128 caracteres."},400);const x=await env.DB.prepare("SELECT id FROM users WHERE lower(username)=?").bind(n).first();if(x)return out({error:"Usuário já cadastrado"},409);const r=await env.DB.prepare("INSERT INTO users(username,password_hash,role,active) VALUES(?,?,?,1)").bind(n,await hash(p),"operator").run();const bytes=crypto.getRandomValues(new Uint8Array(32));const token=[...bytes].map(x=>x.toString(16).padStart(2,"0")).join("");await env.DB.prepare("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,datetime('now','+7 days'))").bind(await hash(token),r.meta.last_row_id).run();return out({ok:true,token,user:{id:r.meta.last_row_id,username:n,role:"operator"}},201)}
