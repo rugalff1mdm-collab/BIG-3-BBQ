@@ -1,3 +1,4 @@
+// BIG3 DEPLOY CHECK 2026-10-08: API products route must be live on the custom domain.
 // Cloudflare deployment sync: 2026-10-08
 const allowedOrigins=new Set(["https://big3bb.com.br","https://www.big3bb.com.br","http://localhost:8787","http://127.0.0.1:8787"]);const headers=(req)=>{const origin=req.headers.get("Origin")||"";return {"Access-Control-Allow-Origin":allowedOrigins.has(origin)?origin:"https://big3bb.com.br","Access-Control-Allow-Headers":"content-type, authorization","Access-Control-Allow-Methods":"GET,POST,PUT,DELETE,OPTIONS","Vary":"Origin","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(),microphone=(),geolocation=()","Content-Security-Policy":"default-src 'self'; img-src 'self' https://images.pexels.com data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:"}};
 const enc=new TextEncoder();
