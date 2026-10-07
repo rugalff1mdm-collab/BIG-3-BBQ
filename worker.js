@@ -32,10 +32,8 @@ async function init(env){
   "ALTER TABLE products ADD COLUMN unit_cost_micros INTEGER DEFAULT 0"
  ]){try{await env.DB.prepare(sql).run()}catch{}}
 
- if(env.ADMIN_PASSWORD&&env.CAIXA_PASSWORD){
-  const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();
-  if(!n.n){const adminPass=env.ADMIN_PASSWORD||"1234";const caixaPass=env.CAIXA_PASSWORD||"1234";await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("admin",await hash(adminPass),"admin").run();await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("caixa",await hash(caixaPass),"operator").run()}
- }
+ const n=await env.DB.prepare("SELECT COUNT(*) n FROM users").first();
+ if(!n.n){const adminPass=env.ADMIN_PASSWORD||"1234";const caixaPass=env.CAIXA_PASSWORD||"1234";await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("admin",await hash(adminPass),"admin").run();await env.DB.prepare("INSERT INTO users(username,password_hash,role) VALUES(?,?,?)").bind("caixa",await hash(caixaPass),"operator").run()}
 }
 async function user(req,env){
  const h=req.headers.get("authorization")||"";
