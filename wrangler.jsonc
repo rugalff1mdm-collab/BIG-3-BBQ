@@ -2,6 +2,6 @@
   "name": "big3-bbq-gestao",
   "main": "worker.js",
   "compatibility_date": "2026-10-05",
-  "assets": {"directory":"./public"},
+  "assets": {"directory":"./public","binding":"ASSETS","not_found_handling":"single-page-application"},
   "d1_databases": [{"binding":"DB","database_name":"big3bb-prod","database_id":"f05982aa-62f3-4dd7-b772-d2063c421f57"}]
 }
