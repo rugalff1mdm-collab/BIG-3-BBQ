@@ -57,6 +57,7 @@ async function login(req,env){
 export default {async fetch(req,env){
  if(req.method==="OPTIONS")return new Response(null,{headers:cors});
  const u=new URL(req.url);
+ if(!u.pathname.startsWith("/api/") && env.ASSETS)return env.ASSETS.fetch(req);
  try{
   if(u.pathname==="/api/health")return out({ok:true,database:!!env.DB});
   if(!env.DB)return out({error:"D1 não configurado"},503);
