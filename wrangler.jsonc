@@ -1,5 +1,5 @@
 {
-  "name": "big3-bbq-gestao",
+  "name": "big-3-bbq",
   "main": "worker.js",
   "compatibility_date": "2026-10-05",
   "assets": {"directory":"./public","binding":"ASSETS","not_found_handling":"single-page-application"},
