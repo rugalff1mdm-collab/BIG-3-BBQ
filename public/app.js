@@ -133,6 +133,8 @@ window.addEventListener('unhandledrejection',e=>{console.error(e.reason)});
 window.login=login;
 window.togglePass=togglePass;
 window.go=go;
+window.showApp=showApp;
+window.showLogin=showLogin;
 window.addEventListener('DOMContentLoaded',()=>{
   const btn=document.querySelector('.login-btn');
   if(btn&&!btn.dataset.bound){
