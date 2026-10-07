@@ -128,3 +128,20 @@ function showLogin(){$('#login').style.display='';$('#app').classList.remove('sh
 boot();
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement?.id==='pass')login()});
 window.addEventListener('unhandledrejection',e=>{console.error(e.reason)});
+
+// BIG 3 BB: garante os eventos mesmo quando a página é carregada pelo Cloudflare Assets.
+window.login=login;
+window.togglePass=togglePass;
+window.go=go;
+window.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.querySelector('.login-btn');
+  if(btn&&!btn.dataset.bound){
+    btn.dataset.bound='1';
+    btn.addEventListener('click',login);
+  }
+  const pass=document.querySelector('#pass');
+  if(pass&&!pass.dataset.bound){
+    pass.dataset.bound='1';
+    pass.addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  }
+});
