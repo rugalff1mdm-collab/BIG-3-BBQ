@@ -1,3 +1,4 @@
+// Cloudflare deployment sync: 2026-10-05
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type, authorization","Access-Control-Allow-Methods":"GET,POST,PUT,DELETE,OPTIONS"};
 const enc=new TextEncoder();
 const out=(x,s=200)=>Response.json(x,{status:s,headers:cors});
